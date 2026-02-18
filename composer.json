@@ -1,0 +1,63 @@
+{
+    "name": "mjoc1985/laravel-inertia-helpers",
+    "description": "Backend and frontend utilities for common Inertia.js + Laravel patterns. Type-safe shared data, flash messages, pagination, filters, sorting, and breadcrumbs.",
+    "keywords": [
+        "laravel",
+        "inertia",
+        "inertiajs",
+        "vue",
+        "helpers",
+        "composables",
+        "flash-messages",
+        "breadcrumbs",
+        "pagination"
+    ],
+    "homepage": "https://github.com/mjoc1985/laravel-inertia-helpers",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Mike",
+            "email": "mike@skyparkingservices.co.uk",
+            "homepage": "https://github.com/mjoc1985",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "illuminate/contracts": "^11.0|^12.0",
+        "illuminate/support": "^11.0|^12.0",
+        "inertiajs/inertia-laravel": "^2.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^9.0|^10.0",
+        "pestphp/pest": "^3.0",
+        "pestphp/pest-plugin-laravel": "^3.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Mjoc1985\\InertiaHelpers\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Mjoc1985\\InertiaHelpers\\Tests\\": "tests/PHP/"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/pest"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Mjoc1985\\InertiaHelpers\\InertiaHelpersServiceProvider"
+            ]
+        }
+    },
+    "prefer-stable": true
+}
