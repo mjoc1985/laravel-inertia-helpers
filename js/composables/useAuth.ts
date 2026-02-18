@@ -29,7 +29,7 @@ export function useAuth<T = InferUser>(options: UseAuthOptions<T> = {}): UseAuth
         if (resolveRoles) return resolveRoles(currentUser)
 
         const u = currentUser as Record<string, unknown>
-        return Array.isArray(u.roles) ? (u.roles as string[]) : []
+        return Array.isArray(u.roles) ? u.roles.filter((r): r is string => typeof r === 'string') : []
     }
 
     const hasRole = (role: string): boolean => {

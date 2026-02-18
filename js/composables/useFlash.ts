@@ -91,8 +91,9 @@ export function useFlash(): UseFlashReturn {
         activeMessages.value = []
     }
 
-    const onFlash = (callback: (message: FlashMessage) => void): void => {
+    const onFlash = (callback: (message: FlashMessage) => void): (() => void) => {
         listeners.add(callback)
+        return () => listeners.delete(callback)
     }
 
     // Watch for new flash messages from Inertia page props.

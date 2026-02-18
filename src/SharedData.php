@@ -2,32 +2,30 @@
 
 declare(strict_types=1);
 
-namespace Mjoc1985\InertiaHelpers\Middleware;
+namespace Mjoc1985\InertiaHelpers;
 
 use Illuminate\Http\Request;
-use Mjoc1985\InertiaHelpers\Breadcrumbs;
 
-trait SharesInertiaData
+class SharedData
 {
     /**
-     * Return all shared data for Inertia.
-     * Call this from your HandleInertiaRequests::share() method.
+     * Return all shared data for Inertia as lazy closures.
      */
-    protected function sharedData(Request $request): array
+    public function toArray(Request $request): array
     {
         return array_filter([
-            'auth' => fn () => $this->sharedAuth($request),
-            'flash' => fn () => $this->sharedFlash($request),
-            'breadcrumbs' => fn () => $this->sharedBreadcrumbs($request),
-            ...$this->sharedCustom($request),
+            'auth' => fn () => $this->auth($request),
+            'flash' => fn () => $this->flash($request),
+            'breadcrumbs' => fn () => $this->breadcrumbs($request),
+            ...$this->custom($request),
         ]);
     }
 
     /**
-     * Share authentication data.
-     * Override this to customise the user payload.
+     * Authentication payload.
+     * Override in a subclass to customise the user shape.
      */
-    protected function sharedAuth(Request $request): array
+    public function auth(Request $request): array
     {
         $user = $request->user();
 
@@ -41,11 +39,11 @@ trait SharesInertiaData
     }
 
     /**
-     * Share flash messages.
+     * Flash messages.
      * Supports both the Flash builder (rich messages) and plain
      * Laravel session flash (e.g. session('success')).
      */
-    protected function sharedFlash(Request $request): array
+    public function flash(Request $request): array
     {
         $types = config('inertia-helpers.flash.types', ['success', 'error', 'warning', 'info']);
 
@@ -82,9 +80,9 @@ trait SharesInertiaData
     }
 
     /**
-     * Share breadcrumbs for the current route.
+     * Breadcrumb trail for the current route.
      */
-    protected function sharedBreadcrumbs(Request $request): array
+    public function breadcrumbs(Request $request): array
     {
         $breadcrumbs = app(Breadcrumbs::class);
 
@@ -92,9 +90,9 @@ trait SharesInertiaData
     }
 
     /**
-     * Override this to add custom shared data.
+     * Override in a subclass to add custom shared data.
      */
-    protected function sharedCustom(Request $request): array
+    public function custom(Request $request): array
     {
         return [];
     }

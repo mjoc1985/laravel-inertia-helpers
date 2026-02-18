@@ -124,6 +124,27 @@ describe('useAuth', () => {
         expect(result.hasRole('delete-users')).toBe(false)
     })
 
+    it('filters non-string values from roles array', () => {
+        Object.assign(mockProps, {
+            auth: {
+                user: {
+                    id: 1,
+                    name: 'John',
+                    email: 'john@test.com',
+                    roles: ['admin', 42, null, 'editor', undefined, true],
+                },
+            },
+        })
+
+        const { result } = withSetup(() => useAuth())
+
+        expect(result.hasRole('admin')).toBe(true)
+        expect(result.hasRole('editor')).toBe(true)
+        expect(result.hasAnyRole('admin', 'editor')).toBe(true)
+        // Non-string values should be filtered out
+        expect(result.hasRole('42')).toBe(false)
+    })
+
     it('handles missing auth prop gracefully', () => {
         // No auth prop at all
         Object.assign(mockProps, {})

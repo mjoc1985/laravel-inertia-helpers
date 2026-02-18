@@ -56,30 +56,58 @@ npm install @mjoc1985/inertia-helpers
 
 ## Quick Start
 
-### 1. Set up the middleware
+### 1. Zero-config shared data
 
-Replace your `HandleInertiaRequests` middleware or extend the one provided:
+The service provider automatically shares auth, flash messages, and breadcrumbs with Inertia — no middleware changes required. Just install the package and the `SharedData` service handles everything.
+
+To customise the shared data, extend the `SharedData` class and rebind it in your `AppServiceProvider`:
 
 ```php
-// app/Http/Middleware/HandleInertiaRequests.php
+// app/Services/CustomSharedData.php
 
-use Mjoc1985\InertiaHelpers\Middleware\SharesInertiaData;
+use Illuminate\Http\Request;
+use Mjoc1985\InertiaHelpers\SharedData;
 
-class HandleInertiaRequests extends Middleware
+class CustomSharedData extends SharedData
 {
-    use SharesInertiaData;
+    public function auth(Request $request): array
+    {
+        $user = $request->user();
 
-    public function share(Request $request): array
+        return [
+            'user' => $user ? [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'avatar_url' => $user->avatar_url,
+                'roles' => $user->roles->pluck('name'),
+            ] : null,
+        ];
+    }
+
+    public function custom(Request $request): array
     {
         return [
-            ...parent::share($request),
-            ...$this->sharedData($request),
+            'app' => [
+                'name' => config('app.name'),
+                'environment' => app()->environment(),
+            ],
         ];
     }
 }
 ```
 
-This automatically shares a structured payload including auth, flash messages, and breadcrumbs.
+```php
+// app/Providers/AppServiceProvider.php
+
+use Mjoc1985\InertiaHelpers\SharedData;
+use App\Services\CustomSharedData;
+
+public function register(): void
+{
+    $this->app->singleton(SharedData::class, CustomSharedData::class);
+}
+```
 
 ### 2. Define your shared data types
 
@@ -133,53 +161,21 @@ const { messages, dismiss } = useFlash()
 
 ## Backend API
 
-### SharesInertiaData Trait
+### SharedData Service
 
-The trait structures all shared data into a predictable shape:
+The `SharedData` service class structures all shared data into a predictable shape and is registered as a singleton. It is automatically wired into `Inertia::share()` by the service provider — no middleware changes needed.
 
-```php
-use Mjoc1985\InertiaHelpers\Middleware\SharesInertiaData;
+**Public methods:**
 
-class HandleInertiaRequests extends Middleware
-{
-    use SharesInertiaData;
+| Method | Description |
+|--------|-------------|
+| `toArray(Request $request): array` | Returns all shared data as lazy closures |
+| `auth(Request $request): array` | User authentication payload |
+| `flash(Request $request): array` | Flash messages |
+| `breadcrumbs(Request $request): array` | Breadcrumb trail |
+| `custom(Request $request): array` | Override hook, returns `[]` by default |
 
-    public function share(Request $request): array
-    {
-        return [
-            ...parent::share($request),
-            ...$this->sharedData($request),
-        ];
-    }
-
-    // Optional: customise what's included in the auth payload
-    protected function sharedAuth(Request $request): array
-    {
-        $user = $request->user();
-
-        return [
-            'user' => $user ? [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'avatar_url' => $user->avatar_url,
-                'roles' => $user->roles->pluck('name'),
-            ] : null,
-        ];
-    }
-
-    // Optional: add custom shared data alongside the defaults
-    protected function sharedCustom(Request $request): array
-    {
-        return [
-            'app' => [
-                'name' => config('app.name'),
-                'environment' => app()->environment(),
-            ],
-        ];
-    }
-}
-```
+To customise, extend and rebind (see [Quick Start](#1-zero-config-shared-data)).
 
 **What gets shared automatically:**
 
@@ -261,7 +257,7 @@ Breadcrumbs::for('users.edit', function ($trail, $user) {
 });
 ```
 
-Breadcrumbs are resolved automatically based on the current route and shared via the middleware. Route model binding works as expected — the parameters from the current route are passed to the breadcrumb callback.
+Breadcrumbs are resolved automatically based on the current route and shared via the `SharedData` service. Route model binding works as expected — the parameters from the current route are passed to the breadcrumb callback.
 
 **Config (config/inertia-helpers.php):**
 
@@ -372,12 +368,13 @@ import { useFlash } from '@mjoc1985/inertia-helpers'
 
 const { messages, dismiss, dismissAll, onFlash } = useFlash()
 
-// Optional: react to new flash messages (e.g. for sound effects, logging)
-onFlash((message) => {
+// Optional: react to new flash messages (returns an unsubscribe function)
+const unsubscribe = onFlash((message) => {
     if (message.type === 'error') {
         console.error('Flash error:', message.text)
     }
 })
+// Call unsubscribe() when you no longer need the callback
 </script>
 
 <template>
@@ -444,8 +441,8 @@ interface UseFlashReturn {
     /** Dismiss all messages */
     dismissAll: () => void
 
-    /** Register a callback for new flash messages */
-    onFlash: (callback: (message: FlashMessage) => void) => void
+    /** Register a callback for new flash messages. Returns an unsubscribe function. */
+    onFlash: (callback: (message: FlashMessage) => void) => () => void
 }
 ```
 
@@ -771,11 +768,10 @@ laravel-inertia-helpers/
 │
 ├── src/                              # Laravel package (PHP)
 │   ├── InertiaHelpersServiceProvider.php
+│   ├── SharedData.php               # Shared data service (auth, flash, breadcrumbs)
 │   ├── Flash.php                     # Fluent flash message builder
 │   ├── Breadcrumbs.php               # Breadcrumb registration & resolution
 │   ├── BreadcrumbTrail.php           # Trail builder passed to callbacks
-│   ├── Middleware/
-│   │   └── SharesInertiaData.php     # Trait for HandleInertiaRequests
 │   └── config/
 │       └── inertia-helpers.php       # Published config
 │
@@ -796,7 +792,7 @@ laravel-inertia-helpers/
     ├── PHP/
     │   ├── FlashTest.php
     │   ├── BreadcrumbsTest.php
-    │   └── SharesInertiaDataTest.php
+    │   └── SharedDataTest.php
     └── JS/
         ├── useAuth.test.ts
         ├── useFlash.test.ts
@@ -813,7 +809,7 @@ laravel-inertia-helpers/
 - `useAuth` composable with typed user access
 - `useFlash` composable with auto-dismiss and stacking
 - `usePagination` composable with full navigation controls
-- `SharesInertiaData` middleware trait
+- `SharedData` service class (auto-wired via `Inertia::share()`)
 - `Flash` builder class
 - TypeScript types with module augmentation
 
@@ -824,7 +820,7 @@ laravel-inertia-helpers/
 ### v1.2
 - `useBreadcrumbs` composable
 - `Breadcrumbs` registration API
-- Auto-sharing breadcrumbs via middleware
+- Auto-sharing breadcrumbs via `SharedData` service
 
 ### v2.0 (Future)
 - Renderless Vue components as alternatives to composables

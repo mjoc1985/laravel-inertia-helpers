@@ -1,4 +1,4 @@
-import type { ComputedRef, Ref } from 'vue'
+import type { ComputedRef } from 'vue'
 
 // -------------------------------------------------------
 // Shared Data Types
@@ -67,7 +67,7 @@ export interface UseFlashReturn {
     messages: ComputedRef<FlashMessage[]>
     dismiss: (id: string) => void
     dismissAll: () => void
-    onFlash: (callback: (message: FlashMessage) => void) => void
+    onFlash: (callback: (message: FlashMessage) => void) => () => void
 }
 
 // -------------------------------------------------------
@@ -138,7 +138,7 @@ export interface UsePaginationReturn<T> {
     updatePerPage: (perPage: number) => void
     isFirstPage: ComputedRef<boolean>
     isLastPage: ComputedRef<boolean>
-    isLoading: Ref<boolean>
+    isLoading: ComputedRef<boolean>
 }
 
 // -------------------------------------------------------
@@ -160,7 +160,7 @@ export interface UseFiltersReturn<T extends Record<string, any>> {
     resetField: <K extends keyof T>(key: K) => void
     isDirty: ComputedRef<boolean>
     activeCount: ComputedRef<number>
-    isLoading: Ref<boolean>
+    isLoading: ComputedRef<boolean>
 }
 
 // -------------------------------------------------------

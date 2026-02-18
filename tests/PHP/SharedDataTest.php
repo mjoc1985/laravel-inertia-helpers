@@ -5,36 +5,10 @@ declare(strict_types=1);
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
 use Mjoc1985\InertiaHelpers\Flash;
-use Mjoc1985\InertiaHelpers\Middleware\SharesInertiaData;
-
-// Create a concrete test class that uses the trait
-class TestSharesInertiaMiddleware
-{
-    use SharesInertiaData;
-
-    public function getSharedData(Request $request): array
-    {
-        return $this->sharedData($request);
-    }
-
-    public function getSharedAuth(Request $request): array
-    {
-        return $this->sharedAuth($request);
-    }
-
-    public function getSharedFlash(Request $request): array
-    {
-        return $this->sharedFlash($request);
-    }
-
-    public function getSharedBreadcrumbs(Request $request): array
-    {
-        return $this->sharedBreadcrumbs($request);
-    }
-}
+use Mjoc1985\InertiaHelpers\SharedData;
 
 beforeEach(function () {
-    $this->middleware = new TestSharesInertiaMiddleware();
+    $this->sharedData = new SharedData();
 });
 
 it('shares auth data for authenticated user', function () {
@@ -50,7 +24,7 @@ it('shares auth data for authenticated user', function () {
     $request = Request::create('/test');
     $request->setUserResolver(fn () => $user);
 
-    $auth = $this->middleware->getSharedAuth($request);
+    $auth = $this->sharedData->auth($request);
 
     expect($auth)->toBe([
         'user' => [
@@ -65,7 +39,7 @@ it('shares null user for guests', function () {
     $request = Request::create('/test');
     $request->setUserResolver(fn () => null);
 
-    $auth = $this->middleware->getSharedAuth($request);
+    $auth = $this->sharedData->auth($request);
 
     expect($auth)->toBe(['user' => null]);
 });
@@ -77,7 +51,7 @@ it('shares rich flash messages from the Flash builder', function () {
     $request = Request::create('/test');
     $request->setLaravelSession(app('session.store'));
 
-    $flash = $this->middleware->getSharedFlash($request);
+    $flash = $this->sharedData->flash($request);
 
     expect($flash['messages'])->toHaveCount(2);
     expect($flash['messages'][0]['type'])->toBe('success');
@@ -92,7 +66,7 @@ it('shares simple Laravel flash messages', function () {
     $request = Request::create('/test');
     $request->setLaravelSession(app('session.store'));
 
-    $flash = $this->middleware->getSharedFlash($request);
+    $flash = $this->sharedData->flash($request);
 
     expect($flash['messages'])->toHaveCount(1);
     expect($flash['messages'][0]['type'])->toBe('success');
@@ -117,7 +91,7 @@ it('does not duplicate simple flash messages that match rich messages', function
     $request = Request::create('/test');
     $request->setLaravelSession(app('session.store'));
 
-    $flash = $this->middleware->getSharedFlash($request);
+    $flash = $this->sharedData->flash($request);
 
     // Should only appear once (the rich version)
     $successMessages = array_filter(
@@ -132,7 +106,7 @@ it('returns empty messages when no flash data exists', function () {
     $request = Request::create('/test');
     $request->setLaravelSession(app('session.store'));
 
-    $flash = $this->middleware->getSharedFlash($request);
+    $flash = $this->sharedData->flash($request);
 
     expect($flash['messages'])->toBe([]);
 });
@@ -142,7 +116,7 @@ it('returns shared data as an array with closures', function () {
     $request->setUserResolver(fn () => null);
     $request->setLaravelSession(app('session.store'));
 
-    $data = $this->middleware->getSharedData($request);
+    $data = $this->sharedData->toArray($request);
 
     // Values should be closures (lazy evaluation)
     expect($data['auth'])->toBeInstanceOf(Closure::class);

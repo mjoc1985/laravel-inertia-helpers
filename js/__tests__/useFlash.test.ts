@@ -186,6 +186,25 @@ describe('useFlash', () => {
         )
     })
 
+    it('unsubscribed onFlash callbacks are not called', async () => {
+        const callback = vi.fn()
+        withSetup(() => {
+            const flash = useFlash()
+            const unsubscribe = flash.onFlash(callback)
+            unsubscribe()
+            return flash
+        })
+
+        mockProps.flash = {
+            messages: [
+                { type: 'info', text: 'After unsub', detail: null, action: null, autoDismiss: false },
+            ],
+        }
+        await nextTick()
+
+        expect(callback).not.toHaveBeenCalled()
+    })
+
     it('cleans up timers on unmount', async () => {
         const { result, wrapper } = withSetup(() => useFlash())
 

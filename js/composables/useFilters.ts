@@ -24,7 +24,7 @@ export function useFilters<T extends Record<string, any>>(
         only = [],
     } = options
 
-    const isLoading = ref(false)
+    const _isLoading = ref(false)
     const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
     // Create a reactive copy of the current filter values
@@ -35,7 +35,7 @@ export function useFilters<T extends Record<string, any>>(
         () => toValue(defaults),
         (newDefaults) => {
             Object.keys(newDefaults).forEach((key) => {
-                ;(values as any)[key] = newDefaults[key]
+                ;(values as Record<string, unknown>)[key] = newDefaults[key]
             })
         },
         { deep: true },
@@ -61,20 +61,20 @@ export function useFilters<T extends Record<string, any>>(
             ? `${currentUrl.pathname}?${queryString}`
             : currentUrl.pathname
 
-        isLoading.value = true
+        _isLoading.value = true
 
         router.visit(url, {
             preserveScroll,
             replace,
             only: only.length > 0 ? only : undefined,
             onFinish: () => {
-                isLoading.value = false
+                _isLoading.value = false
             },
         })
     }
 
     const update = <K extends keyof T>(key: K, value: T[K]): void => {
-        ;(values as any)[key] = value
+        ;(values as Record<string, unknown>)[key as string] = value
 
         // Clear existing debounce timer for this field
         const existingTimer = debounceTimers.get(key as string)
@@ -82,7 +82,7 @@ export function useFilters<T extends Record<string, any>>(
             clearTimeout(existingTimer)
         }
 
-        const debounceMs = (debounce as any)[key]
+        const debounceMs = (debounce as Partial<Record<keyof T, number>>)[key]
 
         if (debounceMs && typeof debounceMs === 'number') {
             const timer = setTimeout(() => {
@@ -97,7 +97,7 @@ export function useFilters<T extends Record<string, any>>(
 
     const updateMany = (updates: Partial<T>): void => {
         Object.entries(updates).forEach(([key, value]) => {
-            ;(values as any)[key] = value
+            ;(values as Record<string, unknown>)[key] = value
         })
         visit()
     }
@@ -105,21 +105,21 @@ export function useFilters<T extends Record<string, any>>(
     const reset = (): void => {
         const defaultValues = toValue(defaults)
         Object.keys(values).forEach((key) => {
-            ;(values as any)[key] = defaultValues[key] ?? ''
+            ;(values as Record<string, unknown>)[key] = defaultValues[key] ?? ''
         })
         visit()
     }
 
     const resetField = <K extends keyof T>(key: K): void => {
         const defaultValues = toValue(defaults)
-        ;(values as any)[key] = defaultValues[key] ?? ''
+        ;(values as Record<string, unknown>)[key as string] = defaultValues[key] ?? ''
         visit()
     }
 
     const isDirty = computed(() => {
         const defaultValues = toValue(defaults)
         return Object.keys(values).some((key) => {
-            const current = (values as any)[key]
+            const current = (values as Record<string, unknown>)[key]
             const def = defaultValues[key] ?? ''
             return current !== def
         })
@@ -128,7 +128,7 @@ export function useFilters<T extends Record<string, any>>(
     const activeCount = computed(() => {
         const defaultValues = toValue(defaults)
         return Object.keys(values).filter((key) => {
-            const current = (values as any)[key]
+            const current = (values as Record<string, unknown>)[key]
             const def = defaultValues[key] ?? ''
             return current !== '' && current !== null && current !== undefined && current !== def
         }).length
@@ -148,6 +148,6 @@ export function useFilters<T extends Record<string, any>>(
         resetField,
         isDirty,
         activeCount,
-        isLoading,
+        isLoading: computed(() => _isLoading.value),
     }
 }

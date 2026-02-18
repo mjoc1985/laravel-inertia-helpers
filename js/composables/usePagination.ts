@@ -20,7 +20,7 @@ export function usePagination<T>(
         only = [],
     } = options
 
-    const isLoading = ref(false)
+    const _isLoading = ref(false)
 
     const items = computed<T[]>(() => {
         return toValue(paginator).data
@@ -35,7 +35,7 @@ export function usePagination<T>(
             .filter((link) => link.label !== '&laquo; Previous' && link.label !== 'Next &raquo;')
             .map((link) => {
                 const pageNumber = link.url
-                    ? parseInt(new URL(link.url, origin).searchParams.get('page') || '1')
+                    ? parseInt(new URL(link.url, origin).searchParams.get('page') || '1', 10)
                     : null
 
                 return {
@@ -82,14 +82,14 @@ export function usePagination<T>(
 
         const url = `${currentUrl.pathname}?${newParams.toString()}`
 
-        isLoading.value = true
+        _isLoading.value = true
 
         router.visit(url, {
             preserveScroll,
             replace,
             only: only.length > 0 ? only : undefined,
             onFinish: () => {
-                isLoading.value = false
+                _isLoading.value = false
             },
         })
     }
@@ -131,6 +131,6 @@ export function usePagination<T>(
         updatePerPage,
         isFirstPage,
         isLastPage,
-        isLoading,
+        isLoading: computed(() => _isLoading.value),
     }
 }
