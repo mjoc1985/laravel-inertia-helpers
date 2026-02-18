@@ -1,0 +1,59 @@
+{
+    "name": "@mjoc1985/inertia-helpers",
+    "version": "0.0.0",
+    "description": "Type-safe Vue 3 composables for Inertia.js + Laravel: auth, flash messages, pagination, filters, sorting, and breadcrumbs.",
+    "keywords": [
+        "inertia",
+        "inertiajs",
+        "laravel",
+        "vue",
+        "vue3",
+        "composables",
+        "typescript",
+        "helpers"
+    ],
+    "homepage": "https://github.com/mjoc1985/laravel-inertia-helpers",
+    "license": "MIT",
+    "author": {
+        "name": "Mike",
+        "email": "mike@skyparkingservices.co.uk",
+        "url": "https://github.com/mjoc1985"
+    },
+    "type": "module",
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.mjs",
+            "require": "./dist/index.cjs"
+        }
+    },
+    "files": [
+        "dist"
+    ],
+    "scripts": {
+        "build": "tsup js/index.ts --format cjs,esm --dts",
+        "dev": "tsup js/index.ts --format cjs,esm --dts --watch",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "lint": "eslint js/",
+        "typecheck": "tsc --noEmit"
+    },
+    "peerDependencies": {
+        "@inertiajs/vue3": "^2.0",
+        "vue": "^3.3"
+    },
+    "devDependencies": {
+        "@inertiajs/vue3": "^2.0",
+        "@vue/test-utils": "^2.4",
+        "eslint": "^9.0",
+        "jsdom": "^25.0",
+        "tsup": "^8.0",
+        "typescript": "^5.4",
+        "typescript-eslint": "^8.0",
+        "vitest": "^2.0",
+        "vue": "^3.4"
+    }
+}
