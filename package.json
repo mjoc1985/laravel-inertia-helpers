@@ -1,6 +1,6 @@
 {
     "name": "@mjoc1985/inertia-helpers",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "description": "Type-safe Vue 3 composables for Inertia.js + Laravel: auth, flash messages, pagination, filters, sorting, and breadcrumbs.",
     "keywords": [
         "inertia",
