@@ -9,6 +9,7 @@ it('creates a success flash message', function () {
     $flash = Flash::success('Operation completed');
 
     expect($flash->toArray())
+        ->id->toBeString()
         ->type->toBe('success')
         ->text->toBe('Operation completed')
         ->detail->toBeNull()
@@ -65,13 +66,15 @@ it('chains all builder methods fluently', function () {
         ->action('Fix', '/fix')
         ->autoDismiss(10000);
 
-    expect($flash->toArray())->toBe([
-        'type' => 'warning',
-        'text' => 'Warning',
-        'detail' => 'Something needs attention',
-        'action' => ['label' => 'Fix', 'url' => '/fix'],
-        'autoDismiss' => 10000,
-    ]);
+    $array = $flash->toArray();
+
+    expect($array)
+        ->id->toBeString()
+        ->type->toBe('warning')
+        ->text->toBe('Warning')
+        ->detail->toBe('Something needs attention')
+        ->action->toBe(['label' => 'Fix', 'url' => '/fix'])
+        ->autoDismiss->toBe(10000);
 });
 
 it('flashes rich messages to the session', function () {
@@ -91,4 +94,19 @@ it('does not set simple session flash keys', function () {
     Flash::success('Done')->send();
 
     expect(Session::get('success'))->toBeNull();
+});
+
+it('generates unique IDs for each flash message', function () {
+    $first = Flash::success('First');
+    $second = Flash::error('Second');
+    $third = Flash::success('Third');
+
+    $ids = [
+        $first->toArray()['id'],
+        $second->toArray()['id'],
+        $third->toArray()['id'],
+    ];
+
+    expect($ids)->toHaveCount(3)
+        ->and(array_unique($ids))->toHaveCount(3);
 });

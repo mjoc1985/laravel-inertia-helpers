@@ -7,11 +7,16 @@ import type { UseFiltersReturn, UseFiltersOptions } from '../types'
  * Syncs a filter form with URL query parameters via Inertia visits.
  * Supports per-field debouncing, dirty tracking, and active filter counting.
  *
+ * The returned `values` object supports direct v-model binding:
+ *
  * @example
- * const { values, update, reset, isDirty, activeCount } = useFilters(
+ * const { values, reset, isDirty, activeCount } = useFilters(
  *     () => props.filters,
  *     { debounce: { search: 300 }, only: ['users'] }
  * )
+ *
+ * // In template:
+ * // <Input v-model="values.search" />
  */
 export function useFilters<T extends Record<string, any>>(
     defaults: MaybeRefOrGetter<T>,
@@ -27,15 +32,15 @@ export function useFilters<T extends Record<string, any>>(
     const _isLoading = ref(false)
     const debounceTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
-    // Create a reactive copy of the current filter values
-    const values = reactive({ ...toValue(defaults) }) as T
+    // Internal reactive state — used for all internal reads/writes
+    const _values = reactive({ ...toValue(defaults) }) as T
 
     // Re-sync values when defaults change (e.g., after an Inertia visit)
     watch(
         () => toValue(defaults),
         (newDefaults) => {
             Object.keys(newDefaults).forEach((key) => {
-                ;(values as Record<string, unknown>)[key] = newDefaults[key]
+                ;(_values as Record<string, unknown>)[key] = newDefaults[key]
             })
         },
         { deep: true },
@@ -47,7 +52,7 @@ export function useFilters<T extends Record<string, any>>(
         const defaultValues = toValue(defaults)
 
         // Only include non-default values in the URL
-        Object.entries(values).forEach(([key, value]) => {
+        Object.entries(_values).forEach(([key, value]) => {
             if (value !== '' && value !== null && value !== undefined && value !== defaultValues[key]) {
                 params.set(key, String(value))
             }
@@ -73,53 +78,67 @@ export function useFilters<T extends Record<string, any>>(
         })
     }
 
-    const update = <K extends keyof T>(key: K, value: T[K]): void => {
-        ;(values as Record<string, unknown>)[key as string] = value
-
-        // Clear existing debounce timer for this field
-        const existingTimer = debounceTimers.get(key as string)
+    const scheduleVisit = (key: string): void => {
+        const existingTimer = debounceTimers.get(key)
         if (existingTimer) {
             clearTimeout(existingTimer)
         }
 
-        const debounceMs = (debounce as Partial<Record<keyof T, number>>)[key]
+        const debounceMs = (debounce as Partial<Record<string, number>>)[key]
 
         if (debounceMs && typeof debounceMs === 'number') {
             const timer = setTimeout(() => {
                 visit()
-                debounceTimers.delete(key as string)
+                debounceTimers.delete(key)
             }, debounceMs)
-            debounceTimers.set(key as string, timer)
+            debounceTimers.set(key, timer)
         } else {
             visit()
         }
     }
 
+    // Writable proxy — setting a property triggers a debounced Inertia visit.
+    // Supports v-model binding: <Input v-model="values.search" />
+    const values = new Proxy(_values, {
+        set(target, prop, value) {
+            const result = Reflect.set(target, prop, value)
+            if (typeof prop === 'string' && prop in toValue(defaults)) {
+                scheduleVisit(prop)
+            }
+            return result
+        },
+    }) as T
+
+    const update = <K extends keyof T>(key: K, value: T[K]): void => {
+        ;(_values as Record<string, unknown>)[key as string] = value
+        scheduleVisit(key as string)
+    }
+
     const updateMany = (updates: Partial<T>): void => {
         Object.entries(updates).forEach(([key, value]) => {
-            ;(values as Record<string, unknown>)[key] = value
+            ;(_values as Record<string, unknown>)[key] = value
         })
         visit()
     }
 
     const reset = (): void => {
         const defaultValues = toValue(defaults)
-        Object.keys(values).forEach((key) => {
-            ;(values as Record<string, unknown>)[key] = defaultValues[key] ?? ''
+        Object.keys(_values).forEach((key) => {
+            ;(_values as Record<string, unknown>)[key] = defaultValues[key] ?? ''
         })
         visit()
     }
 
     const resetField = <K extends keyof T>(key: K): void => {
         const defaultValues = toValue(defaults)
-        ;(values as Record<string, unknown>)[key as string] = defaultValues[key] ?? ''
+        ;(_values as Record<string, unknown>)[key as string] = defaultValues[key] ?? ''
         visit()
     }
 
     const isDirty = computed(() => {
         const defaultValues = toValue(defaults)
-        return Object.keys(values).some((key) => {
-            const current = (values as Record<string, unknown>)[key]
+        return Object.keys(_values).some((key) => {
+            const current = (_values as Record<string, unknown>)[key]
             const def = defaultValues[key] ?? ''
             return current !== def
         })
@@ -127,8 +146,8 @@ export function useFilters<T extends Record<string, any>>(
 
     const activeCount = computed(() => {
         const defaultValues = toValue(defaults)
-        return Object.keys(values).filter((key) => {
-            const current = (values as Record<string, unknown>)[key]
+        return Object.keys(_values).filter((key) => {
+            const current = (_values as Record<string, unknown>)[key]
             const def = defaultValues[key] ?? ''
             return current !== '' && current !== null && current !== undefined && current !== def
         }).length

@@ -8,6 +8,10 @@ const generateId = (): string =>
 /**
  * Manages flash messages with auto-dismiss, stacking, and lifecycle tracking.
  *
+ * Each message has a unique `id` (UUID) generated server-side in Flash.php.
+ * IDs are used for deduplication across Inertia visits — the same message
+ * won't be shown twice even if the page props are re-delivered.
+ *
  * @example
  * const { messages, dismiss, dismissAll, onFlash } = useFlash()
  *
@@ -21,12 +25,18 @@ export function useFlash(): UseFlashReturn {
     const timers = new Map<string, ReturnType<typeof setInterval>>()
     const dismissTimers = new Map<string, ReturnType<typeof setTimeout>>()
     const listeners = new Set<(message: FlashMessage) => void>()
-    let lastProcessedPayload: string | null = null
+    const processedIds = new Set<string>()
 
     const addMessage = (payload: FlashMessagePayload): void => {
+        const id = payload.id ?? generateId()
+
+        // Skip if we've already processed this message
+        if (processedIds.has(id)) return
+        processedIds.add(id)
+
         const message: FlashMessage = {
             ...payload,
-            id: generateId(),
+            id,
             remainingPercent: 100,
             createdAt: Date.now(),
         }
@@ -97,18 +107,14 @@ export function useFlash(): UseFlashReturn {
     }
 
     // Watch for new flash messages from Inertia page props.
-    // Deduplicates by comparing serialized payloads to prevent
-    // adding the same messages on partial reloads.
+    // Deduplicates by server-provided UUID — the same message
+    // won't be shown twice even if page props are re-delivered.
     watch(
-        () => page.props.flash?.messages,
+        () => page.props?.flash?.messages,
         (newMessages) => {
             if (!newMessages || !Array.isArray(newMessages) || newMessages.length === 0) {
                 return
             }
-
-            const serialized = JSON.stringify(newMessages)
-            if (serialized === lastProcessedPayload) return
-            lastProcessedPayload = serialized
 
             newMessages.forEach((payload: FlashMessagePayload) => {
                 if (payload.text) {

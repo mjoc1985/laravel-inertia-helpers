@@ -50,6 +50,7 @@ export type InferUser<S extends SharedData = SharedData> = NonNullable<
 export type FlashType = 'success' | 'error' | 'warning' | 'info'
 
 export interface FlashMessagePayload {
+    id?: string
     type: FlashType
     text: string
     detail?: string | null

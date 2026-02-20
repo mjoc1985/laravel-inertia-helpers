@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Mjoc1985\InertiaHelpers;
 
 use Illuminate\Support\ServiceProvider;
-use Inertia\Inertia;
 
 class InertiaHelpersServiceProvider extends ServiceProvider
 {
@@ -32,7 +31,6 @@ class InertiaHelpersServiceProvider extends ServiceProvider
         }
 
         $this->loadBreadcrumbs();
-        $this->shareInertiaData();
     }
 
     protected function loadBreadcrumbs(): void
@@ -50,15 +48,5 @@ class InertiaHelpersServiceProvider extends ServiceProvider
         }
 
         require $realPath;
-    }
-
-    protected function shareInertiaData(): void
-    {
-        if (! class_exists(Inertia::class)) {
-            return;
-        }
-
-        Inertia::share(fn () => $this->app->make(SharedData::class)
-            ->toArray($this->app->make('request')));
     }
 }

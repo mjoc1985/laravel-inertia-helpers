@@ -224,4 +224,60 @@ describe('useFilters', () => {
         vi.advanceTimersByTime(500)
         expect(mockVisit).not.toHaveBeenCalled()
     })
+
+    it('supports v-model binding via direct property assignment', () => {
+        const { result } = withSetup(() =>
+            useFilters(() => ({ search: '', status: '' })),
+        )
+
+        // Simulate v-model: values.search = 'test'
+        result.values.search = 'test'
+
+        expect(result.values.search).toBe('test')
+        expect(mockVisit).toHaveBeenCalledOnce()
+    })
+
+    it('debounces v-model assignments per field', () => {
+        const { result } = withSetup(() =>
+            useFilters(() => ({ search: '', status: '' }), {
+                debounce: { search: 300 },
+            }),
+        )
+
+        // Simulate rapid typing via v-model
+        result.values.search = 'a'
+        result.values.search = 'ab'
+        result.values.search = 'abc'
+
+        expect(result.values.search).toBe('abc')
+        expect(mockVisit).not.toHaveBeenCalled()
+
+        vi.advanceTimersByTime(300)
+
+        expect(mockVisit).toHaveBeenCalledOnce()
+    })
+
+    it('does not debounce v-model assignments for non-debounced fields', () => {
+        const { result } = withSetup(() =>
+            useFilters(() => ({ search: '', status: '' }), {
+                debounce: { search: 300 },
+            }),
+        )
+
+        result.values.status = 'active'
+
+        expect(mockVisit).toHaveBeenCalledOnce()
+    })
+
+    it('tracks dirty state after v-model assignment', () => {
+        const { result } = withSetup(() =>
+            useFilters(() => ({ search: '', status: '' })),
+        )
+
+        expect(result.isDirty.value).toBe(false)
+
+        result.values.search = 'test'
+
+        expect(result.isDirty.value).toBe(true)
+    })
 })

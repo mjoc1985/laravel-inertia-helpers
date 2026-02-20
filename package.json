@@ -21,18 +21,25 @@
     },
     "type": "module",
     "main": "./dist/index.cjs",
-    "module": "./dist/index.mjs",
+    "module": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "exports": {
         ".": {
             "types": "./dist/index.d.ts",
-            "import": "./dist/index.mjs",
+            "import": "./dist/index.js",
             "require": "./dist/index.cjs"
         }
     },
     "files": [
         "dist"
     ],
+    "publishConfig": {
+        "registry": "https://npm.pkg.github.com"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/mjoc1985/laravel-inertia-helpers.git"
+    },
     "scripts": {
         "build": "tsup js/index.ts --format cjs,esm --dts",
         "dev": "tsup js/index.ts --format cjs,esm --dts --watch",

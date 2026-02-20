@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace Mjoc1985\InertiaHelpers;
 
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
 
 class Flash
 {
+    protected string $id;
+
     protected string $type;
 
     protected string $message;
@@ -20,6 +23,7 @@ class Flash
 
     protected function __construct(string $type, string $message)
     {
+        $this->id = (string) Str::uuid();
         $this->type = $type;
         $this->message = $message;
         $this->autoDismiss = config('inertia-helpers.flash.auto_dismiss', 5000);
@@ -86,6 +90,7 @@ class Flash
     public function toArray(): array
     {
         return [
+            'id' => $this->id,
             'type' => $this->type,
             'text' => $this->message,
             'detail' => $this->detail,

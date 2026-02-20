@@ -61,7 +61,7 @@ class SharedData
         $simpleMessages = [];
         foreach ($types as $type) {
             $message = $request->session()->get($type);
-            if ($message && ! isset($richTexts[$type]) || ! in_array($message, $richTexts[$type] ?? [], true)) {
+            if ($message && (! isset($richTexts[$type]) || ! in_array($message, $richTexts[$type] ?? [], true))) {
                 $simpleMessages[] = [
                     'type' => $type,
                     'text' => $message,

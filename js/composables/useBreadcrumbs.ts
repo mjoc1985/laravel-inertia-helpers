@@ -12,7 +12,7 @@ export function useBreadcrumbs(): UseBreadcrumbsReturn {
     const page = usePage<SharedData>()
 
     const crumbs = computed(() => {
-        const breadcrumbs = page.props.breadcrumbs
+        const breadcrumbs = page.props?.breadcrumbs
 
         if (!breadcrumbs || !Array.isArray(breadcrumbs)) {
             return []

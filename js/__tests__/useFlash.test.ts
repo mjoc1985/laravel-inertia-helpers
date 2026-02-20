@@ -33,7 +33,7 @@ describe('useFlash', () => {
 
         mockProps.flash = {
             messages: [
-                { type: 'success', text: 'Created!', detail: null, action: null, autoDismiss: 5000 },
+                { id: 'server-uuid-1', type: 'success', text: 'Created!', detail: null, action: null, autoDismiss: 5000 },
             ],
         }
         await nextTick()
@@ -41,20 +41,20 @@ describe('useFlash', () => {
         expect(result.messages.value).toHaveLength(1)
         expect(result.messages.value[0].text).toBe('Created!')
         expect(result.messages.value[0].type).toBe('success')
-        expect(result.messages.value[0].id).toMatch(/^flash-/)
+        expect(result.messages.value[0].id).toBe('server-uuid-1')
     })
 
     it('does not duplicate messages on re-trigger with same payload', async () => {
         const { result } = withSetup(() => useFlash())
 
         const payload = [
-            { type: 'success', text: 'Done', detail: null, action: null, autoDismiss: 5000 },
+            { id: 'uuid-1', type: 'success', text: 'Done', detail: null, action: null, autoDismiss: 5000 },
         ]
 
         mockProps.flash = { messages: [...payload] }
         await nextTick()
 
-        // Re-assign the same payload
+        // Re-assign the same payload (same server ID)
         mockProps.flash = { messages: [...payload] }
         await nextTick()
 
@@ -66,19 +66,33 @@ describe('useFlash', () => {
 
         mockProps.flash = {
             messages: [
-                { type: 'success', text: 'First', detail: null, action: null, autoDismiss: 5000 },
+                { id: 'uuid-a', type: 'success', text: 'First', detail: null, action: null, autoDismiss: 5000 },
             ],
         }
         await nextTick()
 
         mockProps.flash = {
             messages: [
-                { type: 'error', text: 'Second', detail: null, action: null, autoDismiss: false },
+                { id: 'uuid-b', type: 'error', text: 'Second', detail: null, action: null, autoDismiss: false },
             ],
         }
         await nextTick()
 
         expect(result.messages.value).toHaveLength(2)
+    })
+
+    it('falls back to client-generated ID when server ID is missing', async () => {
+        const { result } = withSetup(() => useFlash())
+
+        mockProps.flash = {
+            messages: [
+                { type: 'success', text: 'No ID', detail: null, action: null, autoDismiss: false },
+            ],
+        }
+        await nextTick()
+
+        expect(result.messages.value).toHaveLength(1)
+        expect(result.messages.value[0].id).toMatch(/^flash-/)
     })
 
     it('dismisses a message by id', async () => {
