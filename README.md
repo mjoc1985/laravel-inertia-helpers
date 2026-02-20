@@ -757,52 +757,6 @@ const { crumbs, hasCrumbs } = useBreadcrumbs()
 
 ---
 
-## Package Structure
-
-```
-laravel-inertia-helpers/
-├── composer.json
-├── package.json
-├── README.md
-├── LICENSE.md
-│
-├── src/                              # Laravel package (PHP)
-│   ├── InertiaHelpersServiceProvider.php
-│   ├── SharedData.php               # Shared data service (auth, flash, breadcrumbs)
-│   ├── Flash.php                     # Fluent flash message builder
-│   ├── Breadcrumbs.php               # Breadcrumb registration & resolution
-│   ├── BreadcrumbTrail.php           # Trail builder passed to callbacks
-│   └── config/
-│       └── inertia-helpers.php       # Published config
-│
-├── js/                               # Vue 3 package (TypeScript)
-│   ├── index.ts                      # Main entry — exports all composables
-│   ├── composables/
-│   │   ├── useAuth.ts
-│   │   ├── useFlash.ts
-│   │   ├── usePagination.ts
-│   │   ├── useFilters.ts
-│   │   ├── useSorting.ts
-│   │   └── useBreadcrumbs.ts
-│   └── types/
-│       ├── index.ts                  # Shared types & interfaces
-│       └── augmentations.ts          # Module augmentation for user overrides
-│
-└── tests/
-    ├── PHP/
-    │   ├── FlashTest.php
-    │   ├── BreadcrumbsTest.php
-    │   └── SharedDataTest.php
-    └── JS/
-        ├── useAuth.test.ts
-        ├── useFlash.test.ts
-        ├── usePagination.test.ts
-        ├── useFilters.test.ts
-        └── useSorting.test.ts
-```
-
----
-
 ## Versioning & Releases
 
 ### v1.0 — Initial Release
